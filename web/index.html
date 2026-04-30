@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>System Monitor</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <h1>System Monitor</h1>
+
+  <div class="card">
+    <div>CPU: <span id="cpu">--</span> %</div>
+    <div>RAM: <span id="ram">--</span> %</div>
+    <div>GPU: <span id="gpu">--</span> %</div>
+    <div>GPU Temp: <span id="gpuTemp">--</span> °C</div>
+    <div>Status: <span id="status">init</span></div>
+  </div>
+
+
+<div class="bar-container">
+  <div id="cpuBar" class="bar"></div>
+</div>
+
+
+  <canvas id="cpuChart" width="600" height="200"></canvas>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Deine App -->
+  <script src="/app.js"></script>
+</body>
+</html>
