@@ -3,7 +3,7 @@ import json
 import psutil
 import websockets
 
-async def cpu_live_handler(websocket):
+async def handler(websocket):
     try:
         while True:
             cpu = psutil.cpu_percent(interval=None)
@@ -12,8 +12,7 @@ async def cpu_live_handler(websocket):
     except websockets.exceptions.ConnectionClosed:
         pass
 
-
 async def main():
-    async with websockets.serve(cpu_live_handler, "127.0.0.1", 8765):
+    async with websockets.serve(handler, "127.0.0.1", 8765):
         print("WebSocket läuft auf ws://127.0.0.1:8765")
-        await asyncio.Future()  # läuft für immer
+        await asyncio.Future()

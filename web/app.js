@@ -6,6 +6,9 @@ let cpuChart = null;
 // ---------- ViewModel ----------
 
 const viewModel = {
+  live: {  //live is for the websocket
+    cpu: null
+  },
   history: {
     timestamps: [],
     cpu: [],
@@ -119,6 +122,13 @@ function render() {
     viewModel.status;
 }
 
+function renderLive() {
+  const bar = document.getElementById("cpuBar");
+  if (viewModel.live.cpu !== null) {
+    bar.style.width = `${viewModel.live.cpu}%`;
+  }
+}
+
 // ---------- Orchestration ----------
 async function update() {
   await loadStats();
@@ -126,9 +136,24 @@ async function update() {
   renderChart();
 }
 
+function initWebSocket() {
+  const socket = new WebSocket("ws://127.0.0.1:8765");
+
+  socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    viewModel.live.cpu = data.cpu;
+    renderLive();
+  };
+
+  socket.onopen = () => console.log("WebSocket verbunden");
+  socket.onclose = () => console.log("WebSocket getrennt");
+  socket.onerror = (e) => console.error("WebSocket Fehler", e);
+}
+
 // ---------- Start ----------
 window.addEventListener("load", () => {
-  initChart();
-  update();
+  initChart();        // Polling‑Chart
+  initWebSocket();    // Live‑CPU
+  update();           // erstes Polling
   setInterval(update, 2000);
 });
