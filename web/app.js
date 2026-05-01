@@ -7,7 +7,8 @@ let cpuChart = null;
 
 const viewModel = {
   live: {  //live is for the websocket
-    cpu: null
+    cpu: null,
+    connected: false
   },
   history: {
     timestamps: [],
@@ -122,12 +123,18 @@ function render() {
     viewModel.status;
 }
 
+
 function renderLive() {
   const bar = document.getElementById("cpuBar");
-  if (viewModel.live.cpu !== null) {
+
+  if (viewModel.live.cpu !== null && viewModel.live.connected) {
     bar.style.width = `${viewModel.live.cpu}%`;
+    bar.style.opacity = "1";
+  } else {
+    bar.style.opacity = "0.3"; // sichtbar, aber "offline"
   }
 }
+
 
 // ---------- Orchestration ----------
 async function update() {
@@ -136,8 +143,24 @@ async function update() {
   renderChart();
 }
 
+let socket = null;
+let reconnectTimer = null;
+let reconnectDelay = 1000;       // Start: 1s
+const MAX_RECONNECT_DELAY = 10000; // Max: 10s
+
 function initWebSocket() {
-  const socket = new WebSocket("ws://127.0.0.1:8765");
+  connectWebSocket();
+}
+
+function connectWebSocket() {
+  console.log("WebSocket: attempting connect");
+  socket = new WebSocket("ws://127.0.0.1:8765");
+
+  socket.onopen = () => {
+    console.log("WebSocket: connected");
+    viewModel.live.connected = true;
+    reconnectDelay = 1000; // Reset Backoff
+  };
 
   socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
@@ -145,15 +168,37 @@ function initWebSocket() {
     renderLive();
   };
 
-  socket.onopen = () => console.log("WebSocket verbunden");
-  socket.onclose = () => console.log("WebSocket getrennt");
-  socket.onerror = (e) => console.error("WebSocket Fehler", e);
+  socket.onerror = (err) => {
+    console.error("WebSocket error", err);
+    socket.close();
+  };
+
+  socket.onclose = () => {
+    console.warn("WebSocket closed");
+    viewModel.live.connected = false;
+    scheduleReconnect();
+  };
+}
+
+function scheduleReconnect() {
+  if (reconnectTimer) return;
+
+  console.log(`WebSocket: reconnect in ${reconnectDelay}ms`);
+
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    connectWebSocket();
+    reconnectDelay = Math.min(
+      reconnectDelay * 2,
+      MAX_RECONNECT_DELAY
+    );
+  }, reconnectDelay);
 }
 
 // ---------- Start ----------
 window.addEventListener("load", () => {
-  initChart();        // Polling‑Chart
-  initWebSocket();    // Live‑CPU
+  initChart();        // Polling
+  initWebSocket();    // Live (mit Reconnect)
   update();           // erstes Polling
   setInterval(update, 2000);
 });
