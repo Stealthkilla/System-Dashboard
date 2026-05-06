@@ -1,26 +1,61 @@
 import psutil
 import time
+import platform
 
+# ------------------GPU Static, Get Model name and initialize library -----------------
 try:
     import pynvml
     pynvml.nvmlInit()
+
+    handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+    mem = pynvml.nvmlDeviceGetMemoryInfo(handle)
+    GPU_INFO = {
+        "model": pynvml.nvmlDeviceGetName(handle).decode(),
+        "vram_total": mem.total,
+        "clock_max": pynvml.nvmlDeviceGetMaxClockInfo(handle, pynvml.NVML_CLOCK_GRAPHICS)
+}
+
     NVML_AVAILABLE = True
+
 except Exception as e:
     print("NVML nicht verfügbar:", e)
+
+    GPU_INFO = {
+        "model": None
+    }
+
     NVML_AVAILABLE = False
+
+
+# ------------------CPU Static, Get Model name-----------------    
+CPU_INFO = {
+    "model" : platform.processor() or platform.machine(),
+    "cores_physical" : psutil.cpu_count(logical=False),
+    "cores_logical" : psutil.cpu_count(logical=True),
+}
+
+
+# ------------------RAM Static, max RAM----------------- 
+RAM_INFO = {
+    "total" : psutil.virtual_memory().total
+}
+# ------------------CPU dynamic-----------------
 
 def get_cpu_stats():
     return {
-        "load": psutil.cpu_percent(interval=0.5)
+        "load" : psutil.cpu_percent(interval=0.5),
     }
 
-
+# ------------------RAM dynamic-----------------
 def get_ram_stats():
     ram = psutil.virtual_memory()
     return {
-        "load": ram.percent
+        "load" : ram.percent,
+        "free" : ram.available,
+        "used" : ram.used
     }
 
+# ------------------GPU dynamic-----------------
 
 def get_gpu_stats():
     if not NVML_AVAILABLE:
@@ -31,30 +66,47 @@ def get_gpu_stats():
 
     try:
         handle = pynvml.nvmlDeviceGetHandleByIndex(0)
-
+        mem = pynvml.nvmlDeviceGetMemoryInfo(handle)
         util = pynvml.nvmlDeviceGetUtilizationRates(handle)
-        temp = pynvml.nvmlDeviceGetTemperature(
-            handle, pynvml.NVML_TEMPERATURE_GPU
-        )
+        temp = pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
 
         return {
             "load": util.gpu,
-            "temperature": temp
+            "temperature": temp,
+            "clock_current": pynvml.nvmlDeviceGetClockInfo(handle, pynvml.NVML_CLOCK_GRAPHICS),
+            "used": mem.used,
+            "total": mem.total,
+            "gpu_percent": (mem.used / mem.total) * 100
+
         }
 
     except Exception as e:
         print("GPU-Fehler:", e)
         return {
             "load": None,
-            "temperature": None
+            "temperature": None,
+            "clock_current": None
         }
 
 
-
+# ------------------Collect all stats centrally-----------------
 def collect_stats():
+    cpu_load = get_cpu_stats()
+    ram_stats = get_ram_stats()
+    gpu_stats = get_gpu_stats()
+
     return {
-        "cpu": get_cpu_stats(),
-        "ram": get_ram_stats(),
-        "gpu": get_gpu_stats(),
+        "cpu": {
+            "load": cpu_load,
+            "info": CPU_INFO
+        },
+        "ram": {
+            "load": ram_stats,
+            "info": RAM_INFO
+        },
+        "gpu": {
+            **gpu_stats,      # load, temperature, clock_current, used, total, gpu_percent
+            "info": GPU_INFO
+        },
         "timestamp": time.time()
     }

@@ -46,6 +46,6 @@ class StatsHandler(BaseHTTPRequestHandler):
 
 
 def run_server():
-    server = HTTPServer(("127.0.0.1", 8000), StatsHandler)
-    print("Server läuft auf http://127.0.0.1:8000")
+    server = HTTPServer(("0.0.0.0", 8000), StatsHandler)
+    print("Server läuft auf http://192.168.50.87:8000")
     server.serve_forever()
