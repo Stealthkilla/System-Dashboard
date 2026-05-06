@@ -42,8 +42,19 @@ RAM_INFO = {
 # ------------------CPU dynamic-----------------
 
 def get_cpu_stats():
+    temp = None
+
+    try:
+        temps = psutil.sensors_temperatures()
+        if "coretemp" in temps and len(temps["coretemp"]) > 0:
+            # höchste Core-Temperatur nehmen
+            temp = max(t.current for t in temps["coretemp"])
+    except Exception:
+        temp = None
+
     return {
-        "load" : psutil.cpu_percent(interval=0.5),
+        "load": psutil.cpu_percent(interval=0.5),
+        "temperature": temp
     }
 
 # ------------------RAM dynamic-----------------
@@ -91,21 +102,21 @@ def get_gpu_stats():
 
 # ------------------Collect all stats centrally-----------------
 def collect_stats():
-    cpu_load = get_cpu_stats()
+    cpu_stats = get_cpu_stats()
     ram_stats = get_ram_stats()
     gpu_stats = get_gpu_stats()
 
     return {
         "cpu": {
-            "load": cpu_load,
+            **cpu_stats,
             "info": CPU_INFO
         },
         "ram": {
-            "load": ram_stats,
+            **ram_stats,
             "info": RAM_INFO
         },
         "gpu": {
-            **gpu_stats,      # load, temperature, clock_current, used, total, gpu_percent
+            **gpu_stats,
             "info": GPU_INFO
         },
         "timestamp": time.time()
