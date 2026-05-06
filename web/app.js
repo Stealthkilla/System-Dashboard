@@ -13,9 +13,18 @@ const viewModel = {
   history: {
     timestamps: [],
     cpu: [],
+    cpuTemp: [],
     ram: [],
     gpu: [],
-    gpuTemp: []
+    gpuTemp: [],
+    gpuVramPercent: []
+  },
+  static : {
+    cpuModel: null,
+    gpuModel: null,
+    ramTotal: null,
+    gpuVramTotal: null
+
   },
   status: "init"
 };
@@ -34,33 +43,6 @@ function getLatestCpu() {
   return arr.length > 0 ? arr[arr.length - 1] : null;
 }
 
-// ---------- Chart ----------
-function initChart() {
-  const canvas = document.getElementById("cpuChart");
-  const ctx = canvas.getContext("2d");
-
-  cpuChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: [],
-      datasets: [
-        {
-          label: "CPU %",
-          data: [],
-          borderColor: "rgb(75, 192, 192)",
-          tension: 0.2
-        }
-      ]
-    },
-    options: {
-      animation: false,
-      scales: {
-        y: { min: 0, max: 100 }
-      }
-    }
-  });
-}
-
 // ---------- Data (Polling) ----------
 async function loadStats() {
   try {
@@ -73,12 +55,24 @@ async function loadStats() {
 
     pushHistory(viewModel.history.timestamps, now);
     pushHistory(viewModel.history.cpu, data.cpu.load);
+    pushHistory(viewModel.history.cpuTemp, data.cpu.temp);
     pushHistory(viewModel.history.ram, data.ram.load);
 
     if (data.gpu) {
       pushHistory(viewModel.history.gpu, data.gpu.load);
       pushHistory(viewModel.history.gpuTemp, data.gpu.temperature);
+      pushHistory(viewModel.history.gpuVramPercent, data.gpu.gpu_percent);
     }
+
+    
+    // Static (Fill in once)
+    if (!viewModel.static.cpuModel) {
+      viewModel.static.cpuModel = data.cpu.info.model;
+      viewModel.static.gpuModel = data.gpu.info.model;
+      viewModel.static.ramTotal = data.ram.info.total;
+      viewModel.static.gpuVramTotal = data.gpu.info.vram_total;
+    }
+
 
     viewModel.status = "ok";
   } catch (err) {
@@ -103,9 +97,11 @@ function renderChart() {
 
 function render() {
   const cpu = getLatest(viewModel.history.cpu);
+  const cpuTemp = getLatest(viewModel.history.cpuTemp);
   const ram = getLatest(viewModel.history.ram);
   const gpu = getLatest(viewModel.history.gpu);
   const gpuTemp = getLatest(viewModel.history.gpuTemp);
+  const gpuVram = getLatest(viewModel.history.gpuVramPercent);
 
   document.getElementById("cpu").textContent =
     cpu !== null ? cpu.toFixed(1) : "--";
@@ -119,10 +115,11 @@ function render() {
   document.getElementById("gpuTemp").textContent =
     gpuTemp !== null ? gpuTemp.toFixed(0) : "--";
 
-  document.getElementById("status").textContent =
-    viewModel.status;
-}
+  document.getElementById("gpuVram").textContent =
+    gpuVram !== null ? gpuVram.toFixed(1) : "--";
 
+  document.getElementById("status").textContent = viewModel.status;
+}
 
 function renderLive() {
   const bar = document.getElementById("cpuBar");
