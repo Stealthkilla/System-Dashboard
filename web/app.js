@@ -1,7 +1,11 @@
 console.log("app.js geladen");
 
 const MAX_HISTORY = 60;
-let cpuChart = null;
+let cpuLoadDonutChart = null;
+let gpuClockDonutChart = null;
+let ramBarChart = null;
+let vramBarChart = null;
+let networkChart = null;
 
 // ---------- ViewModel ----------
 
@@ -13,11 +17,13 @@ const viewModel = {
   history: {
     timestamps: [],
     cpu: [],
-    cpuTemp: [],
     ram: [],
     gpu: [],
     gpuTemp: [],
-    gpuVramPercent: []
+    gpuVramPercent: [],
+    gpuVramUsed: [],
+    netUp: [],
+    netDown: []
   },
   static : {
     cpuModel: null,
@@ -55,24 +61,32 @@ async function loadStats() {
 
     pushHistory(viewModel.history.timestamps, now);
     pushHistory(viewModel.history.cpu, data.cpu.load);
-    pushHistory(viewModel.history.cpuTemp, data.cpu.temp);
     pushHistory(viewModel.history.ram, data.ram.load);
+
+    // Fake Network Data (solange Backend noch nichts liefert)
+    if (data.network) {
+      pushHistory(viewModel.history.netUp, data.network.up);
+      pushHistory(viewModel.history.netDown, data.network.down);
+      viewModel.live.ping = data.network.ping;
+    }
+    console.log("FETCH RESPONSE", data);
 
     if (data.gpu) {
       pushHistory(viewModel.history.gpu, data.gpu.load);
       pushHistory(viewModel.history.gpuTemp, data.gpu.temperature);
-      pushHistory(viewModel.history.gpuVramPercent, data.gpu.gpu_percent);
+
+      const vramPercent = (data.gpu.used / data.gpu.total) * 100;
+
+      pushHistory(viewModel.history.gpuVramPercent, vramPercent);
+      pushHistory(viewModel.history.gpuVramUsed, data.gpu.used);
     }
 
-    
-    // Static (Fill in once)
     if (!viewModel.static.cpuModel) {
       viewModel.static.cpuModel = data.cpu.info.model;
       viewModel.static.gpuModel = data.gpu.info.model;
       viewModel.static.ramTotal = data.ram.info.total;
       viewModel.static.gpuVramTotal = data.gpu.info.vram_total;
     }
-
 
     viewModel.status = "ok";
   } catch (err) {
@@ -87,30 +101,140 @@ function getLatest(array) {
 }
 
 // ---------- Render ----------
-function renderChart() {
-  if (!cpuChart) return;
-
-  cpuChart.data.labels = viewModel.history.timestamps;
-  cpuChart.data.datasets[0].data = viewModel.history.cpu;
-  cpuChart.update();
-}
 
 function render() {
+  const cpuModelEl = document.getElementById("cpuModel");
+  if (cpuModelEl && viewModel.static.cpuModel) {
+    cpuModelEl.textContent = viewModel.static.cpuModel;
+  }
+
+  const gpuModelEl = document.getElementById("gpuModel");
+  if (gpuModelEl && viewModel.static.gpuModel) {
+    gpuModelEl.textContent = viewModel.static.gpuModel;
+  }
+
   const cpu = getLatest(viewModel.history.cpu);
-  const cpuTemp = getLatest(viewModel.history.cpuTemp);
   const ram = getLatest(viewModel.history.ram);
   const gpu = getLatest(viewModel.history.gpu);
-  const gpuTemp = getLatest(viewModel.history.gpuTemp);
-  const gpuVram = getLatest(viewModel.history.gpuVramPercent);
+  const vramPercent = getLatest(viewModel.history.gpuVramPercent);
+  const vramUsed = getLatest(viewModel.history.gpuVramUsed);
 
-  document.getElementById("cpu").textContent =
-    cpu !== null ? cpu.toFixed(1) : "--";
+  // Charts
+  if (cpuLoadDonutChart) {
+    Charts.setCpuLoadDonut(cpuLoadDonutChart, cpu);
+  }
 
+  if (gpuClockDonutChart) {
+    Charts.setGpuClockDonut(gpuClockDonutChart, gpu);
+  }
+
+  if (ramBarChart && viewModel.static.ramTotal != null && ram != null) {
+    const usedBytes = (ram / 100) * viewModel.static.ramTotal;
+    Charts.setRamBar(ramBarChart, viewModel.static.ramTotal, usedBytes);
+  }
+
+  if (vramBarChart && viewModel.static.gpuVramTotal != null && vramUsed != null) {
+    Charts.setVramBar(vramBarChart, viewModel.static.gpuVramTotal, vramUsed);
+  }
+
+  if (networkChart) {
+    Charts.setNetworkChart(
+      networkChart,
+      viewModel.history.timestamps,
+      viewModel.history.netDown,
+      viewModel.history.netUp
+    );
+  }
+
+  // CPU Text
+  const cpuTextEl = document.getElementById("cpuLoadText");
+  if (cpuTextEl && cpu != null) {
+    cpuTextEl.textContent = `${cpu.toFixed(0)}%`;
+  }
+
+  // GPU Text
+  const gpuTextEl = document.getElementById("gpuLoadText");
+  if (gpuTextEl && gpu != null) {
+    gpuTextEl.textContent = `${gpu.toFixed(0)}%`;
+  }
+
+  // RAM Text floating
+  const ramTextEl = document.getElementById("ramText");
+  if (ramTextEl && ram != null) {
+    ramTextEl.textContent = `${ram.toFixed(1)}%`;
+
+    const containerHeight = ramTextEl.parentElement.clientHeight;
+    const paddingTop = 10;
+    const paddingBottom = 15;
+    const usableHeight = containerHeight - paddingTop - paddingBottom;
+    const rawTop = paddingTop + (1 - ram / 100) * usableHeight - 18;
+
+    const minTop = 5;
+    const maxTop = paddingTop + usableHeight;
+    const top = Math.max(minTop, Math.min(maxTop, rawTop));
+
+    ramTextEl.style.top = `${top}px`;
+    ramTextEl.style.color =
+      ram >= 80 ? "#ef4444" :
+      ram >= 60 ? "#f59e0b" :
+                  "#22c55e";
+  }
+
+  // VRAM Text floating
+  const vramTextEl = document.getElementById("vramText");
+  if (vramTextEl && vramPercent != null) {
+    vramTextEl.textContent = `${vramPercent.toFixed(1)}%`;
+
+    const containerHeight = vramTextEl.parentElement.clientHeight;
+    const paddingTop = 10;
+    const paddingBottom = 15;
+    const usableHeight = containerHeight - paddingTop - paddingBottom;
+    const rawTop = paddingTop + (1 - vramPercent / 100) * usableHeight - 18;
+
+    const minTop = 5;
+    const maxTop = paddingTop + usableHeight;
+    const top = Math.max(minTop, Math.min(maxTop, rawTop));
+
+    vramTextEl.style.top = `${top}px`;
+    vramTextEl.style.color =
+      vramPercent >= 80 ? "#ef4444" :
+      vramPercent >= 60 ? "#f59e0b" :
+                          "#60a5fa";
+  }
+
+  // Ping
+  const pingEl = document.getElementById("pingText");
+  if (pingEl && viewModel.live.ping != null) {
+    const ping = viewModel.live.ping;
+
+    pingEl.textContent = `${ping.toFixed(0)} ms`;
+    pingEl.style.color =
+      ping < 50 ? "#22c55e" :
+      ping < 100 ? "#f59e0b" :
+                   "#ef4444";
+  }
+
+  const downEl = document.getElementById("netDownText");
+  const upEl = document.getElementById("netUpText");
+
+  const down = getLatest(viewModel.history.netDown);
+  const up = getLatest(viewModel.history.netUp);
+
+  if (downEl && down != null) {
+    downEl.textContent = `↓ ${down.toFixed(0)} Mbps`;
+  }
+
+  if (upEl && up != null) {
+    upEl.textContent = `↑ ${up.toFixed(0)} Mbps`;
+  }
+
+}// End of Render function
+
+
+
+  /* Legacy
   document.getElementById("ram").textContent =
     ram !== null ? ram.toFixed(1) : "--";
-
-  document.getElementById("gpu").textContent =
-    gpu !== null ? gpu.toFixed(0) : "--";
 
   document.getElementById("gpuTemp").textContent =
     gpuTemp !== null ? gpuTemp.toFixed(0) : "--";
@@ -131,13 +255,24 @@ function renderLive() {
     bar.style.opacity = "0.3"; // sichtbar, aber "offline"
   }
 }
-
+*/
 
 // ---------- Orchestration ----------
+window.addEventListener("load", () => {
+  cpuLoadDonutChart = Charts.initCpuLoadDonut("cpuLoadDonut");
+  gpuClockDonutChart = Charts.initGpuClockDonut("gpuClockDonut");
+  ramBarChart = Charts.initRamBar("ramBar");
+  vramBarChart = Charts.initVramBar("vramBar");
+  networkChart = Charts.initNetworkChart("networkChart");
+
+  initWebSocket();
+  update();
+  setInterval(update, 1000);
+});
+
 async function update() {
   await loadStats();
-  render();       // ✅ FEHLTE
-  renderChart();
+  render();       
 }
 
 let socket = null;
@@ -162,7 +297,7 @@ function connectWebSocket() {
   socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
     viewModel.live.cpu = data.cpu;
-    renderLive();
+    //renderLive(); LEGACY
   };
 
   socket.onerror = (err) => {
@@ -191,11 +326,3 @@ function scheduleReconnect() {
     );
   }, reconnectDelay);
 }
-
-// ---------- Start ----------
-window.addEventListener("load", () => {
-  initChart();        // Polling
-  initWebSocket();    // Live (mit Reconnect)
-  update();           // erstes Polling
-  setInterval(update, 2000);
-});

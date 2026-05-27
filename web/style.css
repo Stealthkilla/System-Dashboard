@@ -1,28 +1,267 @@
 html, body{
-
-
+  width: 800px!important;
+  height: 480px!important;
+  margin: 0;
 }
-
 
 #app {
-  width: 800px;
-  height: 640px;
-  overflow: hidden;
-}
-
-
-.bar-container {
-  width: 300px;
-  height: 20px;
-  background: #333;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-top: 1rem;
-}
-
-.bar {
   height: 100%;
-  width: 0%;
-  background: limegreen;
-  transition: width 0.2s linear;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#app > .row {
+  flex: 1;
+  min-height: 0;
+}
+
+/* obere Hälfte */
+#app > .row:first-child {
+  flex: 1;   /* 🔥 mehr Platz oben */
+}
+
+/* untere Hälfte */
+#app > .row:last-child {
+  flex: 1;   /* 🔥 weniger Platz unten */
+}
+
+.card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card > .row {
+  flex: 1;
+  align-items: flex-start;       
+}
+
+.card .col-6 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;   
+  gap: 4px;
+  padding-top: 4px;
+}
+
+.col-6 {
+  display: flex;
+  height: 100%;
+}
+
+.col-6 > .card {
+  flex: 1;
+}
+
+.bar-card-container {
+  width: 80%;
+  position: relative;
+}
+
+
+/*
+.donut-container {
+  position: relative;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+*/
+
+.donut-container,
+.bar-card-container {
+  height: 180px;   
+}
+
+.donut-container canvas {
+  width: 170px !important;
+  height: 170px !important;
+}
+
+.donut-container {
+  position: relative;
+}
+
+.donut-center-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -70%);
+  font-size: 30px;
+  font-weight: bold;
+  color: #db0000; /* evtl. #000 je nach Theme */
+  pointer-events: none;
+}
+
+.gpu-model, .cpu-model {
+  flex: 0 0 auto;
+  font-size: 20px;
+  color: #bb1616;
+  text-align: center;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#ramBar,
+#vramBar {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+
+.bar-value-label {
+  position: absolute;
+  left: 60%;
+  transform: translateX(-50%);
+  font-size: 16px;
+  font-weight: bold;
+  color: rgb(207, 11, 11);
+  pointer-events: none;
+}
+
+
+.ram-label {
+  font-size: 20px;
+  color: #bb1616;
+  text-align: center;
+  margin-bottom: 4px;
+  flex: 0 0 auto;
+}
+
+.net-label {
+  height: auto;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 20px;   /* 🔥 größer */
+  font-weight: bold;
+
+  margin-bottom: 4px;
+}
+
+.placeholder-box {
+  width: 100%;
+}
+
+.cardlabels {
+  text-align: center;
+  font-size: 16px;
+  height: 22px;    /* 🔥 fixe Höhe */
+}
+
+.model-label {
+  font-size: 20px;
+  color: #888;
+  height: 30px;    /* 🔥 fixe Höhe */
+  text-align: center;
+}
+
+.cpu-model,
+.gpu-model,
+.ram-label {
+  margin-bottom: 0;
+}
+
+#networkChart {
+  width: 100% !important;
+  height: 180px !important;
+  display: block;
+}
+
+.ping-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;  
+  margin-top: 18px;
+  margin-bottom: 10px;   /* bringt ihn optisch mittig zum Graph */
+
+}
+
+
+.ping-text {
+  font-size: 30px;
+  font-weight: bold;
+}
+
+.net-speed {
+  font-size: 25px;
+  font-weight: bold;
+}
+
+.net-speed.down {
+  color: #60a5fa;   /* blau */
+  margin-top: auto;
+}
+
+.net-speed.up {
+  color: #ef4444;   /* rot */
+}
+
+#networkCard {
+  overflow: hidden;
+  height: 100%;
+}
+
+canvas {
+  display: block;   /* verhindert extra spacing */
+}
+
+#networkCard .col-9,
+#networkCard .col-3 {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.network-content {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;   /* 🔥 verhindert Stretch nach unten */
+}
+
+#networkCard > .row { 
+  flex: 1;
+  min-height: 0;
+}
+/*TESTING*/
+#networkCard {
+  outline: 2px solid red;
+}
+
+#networkCard .row {
+  outline: 2px solid blue;
+}
+
+.network-content {
+  outline: 2px solid green;
+}
+/*END OF TESTING*/
+.placeholder-box {
+  outline: 2px solid yellow;
+  height: 180px !important;
+}
+
+#networkCard .col-9 {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+#networkCard .col-3 {
+  padding-left: 4px;
+  padding-right: 8px;
+}
+
+#networkCard > .row {
+  height: 100%;
+  flex-wrap: nowrap !important;   /* 🔥 DAS IST DER FIX */
 }
