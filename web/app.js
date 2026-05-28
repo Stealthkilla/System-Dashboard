@@ -175,9 +175,9 @@ function render() {
 
     ramTextEl.style.top = `${top}px`;
     ramTextEl.style.color =
-      ram >= 80 ? "#ef4444" :
-      ram >= 60 ? "#f59e0b" :
-                  "#22c55e";
+      ram >= 80 ? "#754279" :
+      ram >= 60 ? "#797542" :
+                  "#4CBAA1";
   }
 
   // VRAM Text floating
@@ -197,9 +197,9 @@ function render() {
 
     vramTextEl.style.top = `${top}px`;
     vramTextEl.style.color =
-      vramPercent >= 80 ? "#ef4444" :
-      vramPercent >= 60 ? "#f59e0b" :
-                          "#60a5fa";
+      vramPercent >= 80 ? "#754279" :
+      vramPercent >= 60 ? "#797542" :
+                          "#4CBAA1";
   }
 
   // Ping
@@ -209,9 +209,9 @@ function render() {
 
     pingEl.textContent = `${ping.toFixed(0)} ms`;
     pingEl.style.color =
-      ping < 50 ? "#22c55e" :
-      ping < 100 ? "#f59e0b" :
-                   "#ef4444";
+      ping < 50 ? "#4CBAA1" :
+      ping < 100 ? "#797542" :
+                   "#754279";
   }
 
   const downEl = document.getElementById("netDownText");

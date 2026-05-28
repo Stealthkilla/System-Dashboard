@@ -1,14 +1,28 @@
+@font-face {
+  font-family: 'Anta-Regular';
+  src: url('/fonts/Anta-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 html, body{
   width: 800px!important;
   height: 480px!important;
   margin: 0;
+  font-family: 'Anta-Regular', sans-serif;
 }
+
 
 #app {
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background-color: rgb(32, 32, 32);
+  /*background-image: url(/img/BG.png);
+  background-size: cover;
+  background-repeat: no-repeat;*/
 }
 
 #app > .row {
@@ -29,7 +43,9 @@ html, body{
 .card {
   height: 100%;
   display: flex;
-  flex-direction: column;
+  flex-direction: column;  
+  background: rgba(0,0,0,0);
+  border: 1px solid rgb(104, 104, 104);
 }
 
 .card > .row {
@@ -92,14 +108,14 @@ html, body{
   transform: translate(-50%, -70%);
   font-size: 30px;
   font-weight: bold;
-  color: #db0000; /* evtl. #000 je nach Theme */
+  color: #4CBAA1; /* evtl. #000 je nach Theme */
   pointer-events: none;
 }
 
 .gpu-model, .cpu-model {
   flex: 0 0 auto;
   font-size: 20px;
-  color: #bb1616;
+  color: #C4D2A6;
   text-align: center;
   margin-bottom: 4px;
   white-space: nowrap;
@@ -116,9 +132,9 @@ html, body{
 
 .bar-value-label {
   position: absolute;
-  left: 60%;
+  left: 62%;
   transform: translateX(-50%);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: bold;
   color: rgb(207, 11, 11);
   pointer-events: none;
@@ -127,7 +143,7 @@ html, body{
 
 .ram-label {
   font-size: 20px;
-  color: #bb1616;
+  color: #C4D2A6;
   text-align: center;
   margin-bottom: 4px;
   flex: 0 0 auto;
@@ -136,18 +152,16 @@ html, body{
 .net-label {
   height: auto;
   flex-shrink: 0;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   font-size: 20px;   /* 🔥 größer */
-  font-weight: bold;
-
+  color: #C4D2A6;
   margin-bottom: 4px;
 }
 
 .placeholder-box {
+  height: 180px !important;
   width: 100%;
 }
 
@@ -159,7 +173,7 @@ html, body{
 
 .model-label {
   font-size: 20px;
-  color: #888;
+  color: #C4D2A6;
   height: 30px;    /* 🔥 fixe Höhe */
   text-align: center;
 }
@@ -182,7 +196,7 @@ html, body{
   flex-direction: column;
   justify-content: center;
   align-items: center;  
-  margin-top: 18px;
+  margin-top: 30px;
   margin-bottom: 10px;   /* bringt ihn optisch mittig zum Graph */
 
 }
@@ -199,12 +213,12 @@ html, body{
 }
 
 .net-speed.down {
-  color: #60a5fa;   /* blau */
+  color: #427967;   /* blau */
   margin-top: auto;
 }
 
 .net-speed.up {
-  color: #ef4444;   /* rot */
+  color: #754279;   /* rot */
 }
 
 #networkCard {
@@ -214,6 +228,7 @@ html, body{
 
 canvas {
   display: block;   /* verhindert extra spacing */
+  background: transparent;
 }
 
 #networkCard .col-9,
@@ -232,23 +247,6 @@ canvas {
 #networkCard > .row { 
   flex: 1;
   min-height: 0;
-}
-/*TESTING*/
-#networkCard {
-  outline: 2px solid red;
-}
-
-#networkCard .row {
-  outline: 2px solid blue;
-}
-
-.network-content {
-  outline: 2px solid green;
-}
-/*END OF TESTING*/
-.placeholder-box {
-  outline: 2px solid yellow;
-  height: 180px !important;
 }
 
 #networkCard .col-9 {

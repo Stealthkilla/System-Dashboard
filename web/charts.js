@@ -3,6 +3,10 @@
 // Wir hängen die API bewusst an window.Charts, damit app.js sie nutzen kann
 // ohne Module/Bundler.
 
+
+Chart.defaults.font.family = "'Anta-Regular', sans-serif";
+Chart.defaults.font.size = 11;
+
 function initGpuClockDonut(canvasId) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) throw new Error(`Canvas #${canvasId} nicht gefunden`);
@@ -71,7 +75,7 @@ function initRamBar(canvasId) {
         {
           label: "Used",
           data: [0],
-          backgroundColor: "#22c55e",
+          backgroundColor: "#114599",
           borderWidth: 0,
           borderRadius: 6,
           borderSkipped: false
@@ -79,7 +83,7 @@ function initRamBar(canvasId) {
         {
           label: "Free",
           data: [100],
-          backgroundColor: "#2f2f2f",
+          backgroundColor: "#39a30b",
           borderWidth: 0,
           borderRadius: 6,
           borderSkipped: false
@@ -220,7 +224,7 @@ function initNetworkChart(canvasId) {
         {
           label: "Down",
           data: [],
-          borderColor: "#60a5fa",
+          borderColor: "#427967",
           backgroundColor: "rgba(96,165,250,0.15)",
           tension: 0.25,
           pointRadius: 0,
@@ -229,7 +233,7 @@ function initNetworkChart(canvasId) {
         {
           label: "Up",
           data: [],
-          borderColor: "#ef4444",
+          borderColor: "#754279",
           backgroundColor: "rgba(239,68,68,0.12)",
           tension: 0.25,
           pointRadius: 0,
@@ -250,13 +254,16 @@ options: {
     y: {
       display: true,
       min: 0,
+      max: 1000,
       suggestedMax: 100,
       grace: "10%",
       ticks: {
-        color: "#888",
+        stepSize: 100,
+        color: "#C4D2A6",
         callback: (value) => `${Math.round(value)} Mbps`
       },
       grid: {
+        displa: true,
         color: "#333"
       }
     }
@@ -280,9 +287,9 @@ options: {
 
   // Ampel-Farblogik
   const color =
-    cpuPercent >= 80 ? "#ef4444" :   // rot
-    cpuPercent >= 50 ? "#f59e0b" :   // orange
-                       "#22c55e";    // grün
+    cpuPercent >= 80 ? "#754279" :   // rot
+    cpuPercent >= 50 ? "#797542" :   // orange
+                       "#427967";    // grün
 
   chart.data.datasets[0].backgroundColor[0] = color;
   chart.update();
@@ -299,9 +306,9 @@ options: {
   chart.data.datasets[0].data[1] = 100 - gpuPercent;
 
   const color =
-    gpuPercent >= 80 ? "#ef4444" :
-    gpuPercent >= 50 ? "#f59e0b" :
-                       "#60a5fa";  // GPU-Farbe
+    gpuPercent >= 80 ? "#754279" :
+    gpuPercent >= 50 ? "#797542" :
+                       "#427967";  // GPU-Farbe
 
   chart.data.datasets[0].backgroundColor[0] = color;
 
@@ -330,9 +337,9 @@ function setRamBar(chart, totalBytes, usedBytes) {
   const usedPercent = (usedBytes / totalBytes) * 100;
 
   const color =
-    usedPercent >= 80 ? "#ef4444" :
-    usedPercent >= 60 ? "#f59e0b" :
-                        "#22c55e";
+    usedPercent >= 80 ? "#754279" :
+    usedPercent >= 60 ? "#797542" :
+                        "#427967";
 
   chart.data.datasets[0].backgroundColor = color;
   chart.data.datasets[1].backgroundColor = "#2f2f2f";
@@ -362,9 +369,9 @@ function setVramBar(chart, totalBytes, usedBytes) {
   const usedPercent = (usedBytes / totalBytes) * 100;
 
   const color =
-    usedPercent >= 80 ? "#ef4444" :
-    usedPercent >= 60 ? "#f59e0b" :
-                        "#60a5fa";
+    usedPercent >= 80 ? "#754279" :
+    usedPercent >= 60 ? "#797542" :
+                        "#427967";
 
   chart.data.datasets[0].backgroundColor = color;
   chart.data.datasets[1].backgroundColor = "#2f2f2f";
@@ -383,10 +390,18 @@ function setNetworkChart(chart, labels, down, up) {
     ...(up || [])
   );
 
-  // 🔥 wichtig: KEIN hartes Limiting
-  let padded = maxVal * 1.15;
+  // Wenn noch keine echten Daten da sind:
+  if (maxVal <= 0) {
+    chart.options.scales.y.min = 0;
+    chart.options.scales.y.max = 1000;
+    chart.options.scales.y.ticks.stepSize = 100;
+    chart.options.scales.y.grace = "10%";
 
-  // 🔥 dynamische Schrittweite
+    chart.update("none");
+    return;
+  }
+
+  let padded = maxVal * 1.15;
   let step;
 
   if (padded <= 10) step = 1;
@@ -403,10 +418,8 @@ function setNetworkChart(chart, labels, down, up) {
   chart.options.scales.y.min = 0;
   chart.options.scales.y.max = niceMax;
   chart.options.scales.y.ticks.stepSize = step;
-
-  // extra Luft oben
   chart.options.scales.y.grace = "10%";
-  chart.resize();
+
   chart.update("none");
 }
 
